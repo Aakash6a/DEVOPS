@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Place Order{% endblock %}
+{% block content %}
+<h1>Place an Order</h1>
+<form method="POST" action="{{ url_for('ui_place_order') }}">
+  <div class="form-group">
+    <label for="customer_id">Customer ID</label>
+    <input type="number" class="form-control" id="customer_id" name="customer_id" value="1" required>
+  </div>
+  <h3>Products</h3>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Available</th>
+        <th>Quantity</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in products %}
+      <tr>
+        <td>{{ product.product_id }}</td>
+        <td>{{ product.name }}</td>
+        <td>{{ product.stock_quantity }}</td>
+        <td>
+          <input type="number" min="0" max="{{ product.stock_quantity }}" class="form-control" name="qty_{{ product.product_id }}" value="0">
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <button type="submit" class="btn btn-primary">Place Order</button>
+  <a href="{{ url_for('ui_report') }}" class="btn btn-secondary">Back to Report</a>
+</form>
+{% endblock %}

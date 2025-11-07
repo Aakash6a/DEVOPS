@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-app-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: inventory-app
+  template:
+    metadata:
+      labels:
+        app: inventory-app
+    spec:
+      containers:
+      - name: inventory-app
+        image: inventory-app:latest
+        env:
+          - name: DB_USER
+            value: "inventory_user"
+          - name: DB_PASSWORD
+            value: "inventory_pass"
+          - name: DB_HOST
+            value: "mysql-service"
+          - name: DB_NAME
+            value: "inventory_db"
+          - name: SECRET_KEY
+            value: "your_secret_key"
+        ports:
+          - containerPort: 5000
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-app-service
+spec:
+  selector:
+    app: inventory-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: LoadBalancer
+
