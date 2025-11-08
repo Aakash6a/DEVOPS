@@ -87,8 +87,11 @@ jobs:
 
     - name: Configure kubectl
       run: |
-        echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
-        echo "KUBECONFIG=$(pwd)/kubeconfig.yaml" >> $GITHUB_ENV
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
+        chmod 600 $HOME/.kube/config
+        kubectl config use-context docker-desktop
+        kubectl cluster-info
 
     - name: Update Kubernetes manifests
       env:
@@ -99,21 +102,39 @@ jobs:
 
     - name: Deploy to Kubernetes
       run: |
-        # First apply with validation disabled to handle initial setup
-        kubectl apply -f mysql-deployment.yaml --validate=false
-        kubectl apply -f inventory-app-deployment.yaml --validate=false
+        # Verify connection to cluster
+        kubectl cluster-info
         
-        # Wait for MySQL to be ready
+        # Create registry secret if it doesn't exist
+        kubectl create secret docker-registry ghcr-secret \
+          --docker-server=${{ env.REGISTRY }} \
+          --docker-username=${{ github.actor }} \
+          --docker-password=${{ secrets.GITHUB_TOKEN }} \
+          --docker-email=${{ github.actor }}@users.noreply.github.com \
+          --dry-run=client -o yaml | kubectl apply -f -
+        
+        # Apply deployments
+        kubectl apply -f mysql-deployment.yaml
+        kubectl apply -f inventory-app-deployment.yaml
+        
+        # Wait for deployments
         echo "Waiting for MySQL deployment..."
         kubectl rollout status deployment/mysql-deployment --timeout=180s
         
-        # Then deploy the app
-        echo "Deploying application..."
+        echo "Waiting for app deployment..."
         kubectl rollout status deployment/inventory-app-deployment --timeout=180s
         
-        # Verify services
+        # Verify all resources
+        echo "Checking all resources..."
+        kubectl get all
+        
+        # Verify services specifically
         echo "Checking services..."
         kubectl get services
+        
+        # Check pod logs
+        echo "Checking application logs..."
+        kubectl logs -l app=inventory-app --tail=20
 
   deploy-to-local:
     needs: build-and-test
