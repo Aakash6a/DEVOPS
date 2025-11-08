@@ -1,3 +1,85 @@
+# RUNBOOK — Inventory Management System CI/CD
+
+This runbook documents what we implemented in this repository and how to set up a self-hosted GitHub Actions runner so CI can deploy to a local machine (development/staging) automatically.
+
+Summary of what is in this repository
+- Application: `app.py` — Flask web app, simple UI in `templates/`.
+- Containerization: `Dockerfile` and `.dockerignore`.
+- Local dev orchestration: `docker-compose.yaml`.
+- Kubernetes manifests: `inventory-app-deployment.yaml`, `mysql-deployment.yaml`.
+- CI workflow: `.github/workflows/ci-cd.yml` — build/test, push image, and deploy jobs.
+- Tests: `tests/test_app.py` — basic pytest smoke tests added.
+
+Goal
+- Provide a working CI pipeline that builds, tests, and can deploy to a local machine using a self-hosted runner.
+
+Prerequisites (on the machine you will host the runner)
+- Windows machine (this repo used Windows in examples) or Linux/macOS as needed.
+- Install Docker (Docker Desktop or Docker Engine) and ensure `docker` is on PATH.
+- If you want to deploy to a local k8s cluster, install `kubectl` and ensure it's configured to talk to your cluster.
+- A GitHub account with admin access to this repository to register the self-hosted runner.
+
+Set up a self-hosted runner (short steps)
+1. In GitHub, open the repository → Settings → Actions → Runners → Add runner.
+   - Choose the OS (Windows/Linux/macOS) for the machine you'll run the runner on.
+   - GitHub will show the exact `--url` and `--token` values and provides a zip download link.
+
+2. On your machine open PowerShell and run (example flow shown; replace tokens/URLs with values from the GitHub UI):
+
+```powershell
+# create folder for runner and download (the URL will be provided by GitHub UI)
+mkdir C:\actions-runner
+cd C:\actions-runner
+
+# download the runner package (GitHub UI provides the exact URL)
+Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v2.xx.x/actions-runner-win-x64-2.xx.x.zip -OutFile actions-runner.zip
+Expand-Archive .\actions-runner.zip -DestinationPath .
+
+# configure the runner (GitHub UI gives the --url and --token values)
+.\config.cmd --url https://github.com/<OWNER>/<REPO> --token <REGISTER_TOKEN> --labels self-hosted,local
+
+# run interactively for testing
+.\run.cmd
+```
+
+3. (Optional) Install as a service so it runs on boot — the runner UI shows commands to install as a service.
+
+Install required tools on the runner
+- Docker (for running containers built by CI)
+- kubectl (if you want `kubectl apply` to a local cluster)
+- Optional: Helm, kind/minikube, or other tooling
+
+Workflow changes we added
+- A new job `deploy-to-local` is included in `.github/workflows/ci-cd.yml`. It targets the self-hosted runner and demonstrates building/pulling and running the Docker image locally on the runner host.
+
+Sample deploy-to-local job behavior (what it does)
+- Checks out the repository on the runner
+- Builds a Docker image tagged with the current commit SHA
+- Stops/removes any existing `inventory-app` container
+- Runs the container on port 5000
+
+Security and secrets
+- Keep secrets in GitHub Actions Secrets (Settings → Secrets → Actions). Do NOT store secrets in the repo.
+- The runner will run jobs with access to your local machine resources — treat the runner as a privileged host. Limit access to trusted repositories or organizations.
+
+Troubleshooting tips
+- If the job queues but nothing runs on the runner, confirm the runner is online in the repository Settings → Actions → Runners.
+- Check `./_diag` logs inside the runner folder for errors.
+- If Docker commands fail on the runner, ensure the account running the runner has permission to access Docker.
+
+How to test the full flow
+1. Ensure the self-hosted runner is running and labeled with `self-hosted,local`.
+2. Push a commit to `main` on GitHub (`git push`).
+3. Watch Actions in the repo → Actions — the `build-and-test` job will run on GitHub-hosted runners and `deploy-to-local` will be dispatched to your self-hosted runner.
+
+If you'd like, I can:
+- Add a `deploy-to-local` job that performs a local docker build/run (I added this in the workflow), or
+- Add a second example that uses `kubectl` to deploy to a k8s cluster available to the runner.
+
+Contact and next steps
+- If you need the runner service installed, tell me your OS and I will provide the exact service installation commands. I can also add a small script to the repo that runs on the runner to perform image cleanup and health checks.
+
+-- End of RUNBOOK
 # Runbook — Inventory Management System
 
 This document summarizes the actions we've performed in this workspace, the exact commands used, the files changed, and how to reproduce or continue work. It's intended as a chronological and actionable record.

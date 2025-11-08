@@ -102,3 +102,30 @@ jobs:
         kubectl apply -f mysql-deployment.yaml
         kubectl apply -f inventory-app-deployment.yaml
         kubectl rollout status deployment/inventory-app-deployment --timeout=180s
+
+  deploy-to-local:
+    needs: build-and-test
+    # Only run on main for automatic local deployments; change if you prefer different branches
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    runs-on: [self-hosted, local]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Docker image locally
+        run: |
+          # Tag with commit SHA so each build is unique
+          docker build -t inventory-app:${{ github.sha }} .
+
+      - name: Stop and remove old container
+        run: |
+          docker stop inventory-app || true
+          docker rm inventory-app || true
+
+      - name: Run container locally
+        run: |
+          docker run -d --name inventory-app -p 5000:5000 inventory-app:${{ github.sha }}
+
+      - name: Check container status
+        run: |
+          docker ps --filter name=inventory-app --format "{{.Names}}: {{.Status}}"
