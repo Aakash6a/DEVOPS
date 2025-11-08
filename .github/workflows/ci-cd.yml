@@ -107,7 +107,8 @@ jobs:
     needs: build-and-test
     # Only run on main for automatic local deployments; change if you prefer different branches
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    runs-on: [self-hosted, local]
+    runs-on: ubuntu-latest
+
 
     steps:
       - uses: actions/checkout@v3
