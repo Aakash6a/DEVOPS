@@ -1,10 +1,50 @@
 {% extends "base.html" %}
 {% block title %}Home{% endblock %}
 {% block content %}
-<h1>Inventory Management System</h1>
-<ul>
-    <li><a href="{{ url_for('ui_report') }}">View Report</a></li>
-    <li><a href="{{ url_for('ui_add_product') }}">Add Product</a></li>
-    <li><a href="{{ url_for('ui_place_order') }}">Place Order</a></li>
-</ul>
+<div class="jumbotron bg-white shadow-sm">
+    <h1 class="display-4"><i class="fas fa-boxes text-primary mr-3"></i>Welcome to Inventory Management</h1>
+    <p class="lead">Manage your inventory efficiently with our comprehensive system.</p>
+    <hr class="my-4">
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">View Report</h5>
+                <p class="card-text">Check current inventory levels and product statistics.</p>
+                <a href="{{ url_for('ui_report') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-right mr-2"></i>View Report
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Add Product</h5>
+                <p class="card-text">Add new products to your inventory system.</p>
+                <a href="{{ url_for('ui_add_product') }}" class="btn btn-primary">
+                    <i class="fas fa-plus mr-2"></i>Add Product
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-shopping-cart fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Place Order</h5>
+                <p class="card-text">Create new orders for your inventory items.</p>
+                <a href="{{ url_for('ui_place_order') }}" class="btn btn-primary">
+                    <i class="fas fa-cart-plus mr-2"></i>Place Order
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
