@@ -33,6 +33,10 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-cov flake8
 
+    - name: Run tests with pytest
+      run: |
+        pytest -q
+
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
