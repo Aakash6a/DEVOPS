@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: inventory-app-deployment
 spec:
-  replicas: 3
+  replicas: 1  # Starting with 1 replica for testing
   selector:
     matchLabels:
       app: inventory-app
@@ -15,6 +15,7 @@ spec:
       containers:
       - name: inventory-app
         image: inventory-app:latest
+        imagePullPolicy: Never  # Use local image
         env:
           - name: DB_USER
             value: "inventory_user"
@@ -28,19 +29,25 @@ spec:
             value: "your_secret_key"
         ports:
           - containerPort: 5000
-        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
         readinessProbe:
           httpGet:
-            path: /
+            path: /health  # Add this endpoint to your Flask app
             port: 5000
-          initialDelaySeconds: 10
-          periodSeconds: 5
+          initialDelaySeconds: 15
+          periodSeconds: 10
         livenessProbe:
           httpGet:
-            path: /
+            path: /health  # Add this endpoint to your Flask app
             port: 5000
           initialDelaySeconds: 30
-          periodSeconds: 10
+          periodSeconds: 20
 ---
 apiVersion: v1
 kind: Service

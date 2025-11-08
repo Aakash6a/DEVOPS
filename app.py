@@ -14,6 +14,15 @@ app = Flask(__name__)
 # Secret key for flashing messages in the simple UI
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret')
 
+@app.route('/health')
+def health_check():
+    try:
+        # Check database connection
+        db.session.execute('SELECT 1')
+        return jsonify({"status": "healthy"}), 200
+    except Exception as e:
+        return jsonify({"status": "unhealthy", "error": str(e)}), 500
+
 # --- Database Configuration ---
 db_user = os.environ.get('DB_USER', 'inventory_user')
 db_password = os.environ.get('DB_PASSWORD', 'inventory_pass')
