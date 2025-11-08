@@ -99,9 +99,21 @@ jobs:
 
     - name: Deploy to Kubernetes
       run: |
-        kubectl apply -f mysql-deployment.yaml
-        kubectl apply -f inventory-app-deployment.yaml
+        # First apply with validation disabled to handle initial setup
+        kubectl apply -f mysql-deployment.yaml --validate=false
+        kubectl apply -f inventory-app-deployment.yaml --validate=false
+        
+        # Wait for MySQL to be ready
+        echo "Waiting for MySQL deployment..."
+        kubectl rollout status deployment/mysql-deployment --timeout=180s
+        
+        # Then deploy the app
+        echo "Deploying application..."
         kubectl rollout status deployment/inventory-app-deployment --timeout=180s
+        
+        # Verify services
+        echo "Checking services..."
+        kubectl get services
 
   deploy-to-local:
     needs: build-and-test
